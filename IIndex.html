@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ALAN É O MELHOR PROFESSOR DO MUNDO</title>
+  <style>
+    :root{
+      --bg1: #ff9a9e;
+      --bg2: #fad0c4;
+      --accent: #ffd166;
+      --glass: rgba(255,255,255,0.12);
+      --card: rgba(255,255,255,0.85);
+    }
+    html,body{height:100%;margin:0;font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial}
+    body{
+      background: linear-gradient(135deg,var(--bg1),var(--bg2));
+      display:flex;align-items:center;justify-content:center;overflow:hidden;
+    }
+
+    .stage{
+      width:min(1100px,94vw);
+      height:min(640px,86vh);
+      position:relative;
+      border-radius:20px;
+      box-shadow:0 20px 60px rgba(0,0,0,0.18);
+      overflow:hidden;
+      background:linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+      display:flex;align-items:center;justify-content:center;
+    }
+
+    header.card{
+      position:absolute;inset:24px;border-radius:14px;padding:28px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+      backdrop-filter: blur(6px) saturate(1.1);
+      -webkit-backdrop-filter: blur(6px) saturate(1.1);
+      background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+      pointer-events:none;
+    }
+
+    h1{
+      margin:0;font-size:clamp(36px,6vw,72px);text-align:center;line-height:1;letter-spacing:0.6px;
+      color: #ffffff; text-shadow: 0 4px 18px rgba(0,0,0,0.25);
+      transform-origin:center;animation:pop 1.2s ease-out both;
+    }
+
+    @keyframes pop{
+      0%{transform:scale(.85) rotate(-6deg);opacity:0}
+      60%{transform:scale(1.05) rotate(3deg);opacity:1}
+      100%{transform:scale(1) rotate(0)}
+    }
+
+    .subtitle{margin-top:10px;color:rgba(255,255,255,0.95);font-size:clamp(14px,2.2vw,20px);opacity:0.95}
+
+    /* decorative floating shapes */
+    .float{
+      position:absolute;pointer-events:none;mix-blend-mode:screen;filter:drop-shadow(0 8px 20px rgba(0,0,0,0.12));
+      opacity:0.95;
+    }
+    .blob{width:160px;height:160px;border-radius:40%;background:linear-gradient(135deg,#ffd166,#fcbf49);top:12%;left:6%;animation:float1 6s ease-in-out infinite}
+    .blob2{width:120px;height:120px;border-radius:40%;background:linear-gradient(135deg,#a0e9ff,#7ee8fa);bottom:10%;right:6%;animation:float2 5s ease-in-out infinite}
+    .star{width:90px;height:90px;background:radial-gradient(circle at 30% 30%, #fff9, #fff0);border-radius:12px;top:8%;right:14%;transform:rotate(12deg);animation:spin 20s linear infinite}
+
+    @keyframes float1{0%{transform:translateY(0) rotate(-6deg)}50%{transform:translateY(14px) rotate(6deg)}100%{transform:translateY(0) rotate(-6deg)}}
+    @keyframes float2{0%{transform:translateY(0) rotate(4deg)}50%{transform:translateY(-12px) rotate(-4deg)}100%{transform:translateY(0) rotate(4deg)}}
+    @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+
+    /* control panel */
+    .controls{
+      position:absolute;left:20px;bottom:20px;background:var(--card);padding:10px;border-radius:10px;display:flex;gap:8px;align-items:center;box-shadow:0 8px 20px rgba(0,0,0,0.12);
+    }
+    .btn{border:0;padding:8px 12px;border-radius:8px;font-weight:600;cursor:pointer}
+    .btn--conf{background:linear-gradient(90deg,#7ee8fa,#a0e9ff)}
+    .btn--reset{background:linear-gradient(90deg,#ffd166,#ffb86b)}
+
+    /* small responsive note */
+    .hint{position:absolute;right:18px;bottom:18px;color:rgba(255,255,255,0.9);font-weight:600;background:transparent}
+
+    /* make canvas cover */
+    canvas#confettiCanvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+
+    /* accessibility focus */
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+  </style>
+</head>
+<body>
+  <div class="stage" role="region" aria-label="Cartaz celebrando Alan">
+    <canvas id="confettiCanvas"></canvas>
+
+    <div class="float blob" aria-hidden="true"></div>
+    <div class="float blob2" aria-hidden="true"></div>
+    <div class="float star" aria-hidden="true"></div>
+
+    <header class="card">
+      <h1 id="main-heading">ALAN É O MELHOR PROFESSOR DO MUNDO</h1>
+      <div class="subtitle">Obrigado por ensinar com tanto carinho e entusiasmo 🎉</div>
+    </header>
+
+    <div class="controls" aria-hidden="false">
+      <button class="btn btn--conf" id="btn-conf">Soltar Confetes</button>
+      <button class="btn btn--reset" id="btn-reset">Reiniciar</button>
+    </div>
+
+    <div class="hint">Toque em "Soltar Confetes" para comemorar ✨</div>
+    <div class="sr-only" aria-live="polite">Página pronta. Pressione o botão Soltar Confetes para começar.</div>
+  </div>
+
+  <script>
+    // Simple confetti system using canvas
+    const canvas = document.getElementById('confettiCanvas');
+    const ctx = canvas.getContext('2d');
+    let W = canvas.width = canvas.offsetWidth;
+    let H = canvas.height = canvas.offsetHeight;
+
+    function resize(){
+      W = canvas.width = canvas.offsetWidth;
+      H = canvas.height = canvas.offsetHeight;
+    }
+    window.addEventListener('resize', resize);
+
+    // particle class
+    class Particle{
+      constructor(){
+        this.reset();
+      }
+      reset(){
+        this.x = Math.random()*W;
+        this.y = Math.random()*-H/2 - 10;
+        this.w = 6 + Math.random()*10;
+        this.h = 6 + Math.random()*6;
+        this.angle = Math.random()*360;
+        this.rotation = (Math.random()-0.5)*6;
+        this.speedY = 1 + Math.random()*3;
+        this.speedX = (Math.random()-0.5)*3;
+        this.color = particleColors[Math.floor(Math.random()*particleColors.length)];
+        this.tilt = Math.random()*10;
+        this.life = 0;
+        this.ttl = 80 + Math.random()*80;
+      }
+      update(){
+        this.x += this.speedX;
+        this.y += this.speedY;
+        this.angle += this.rotation;
+        this.tilt += 0.1;
+        this.life++;
+        if(this.life>this.ttl || this.y>H+50){
+          this.reset();
+        }
+      }
+      draw(ctx){
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.angle*Math.PI/180);
+        // draw rounded rect as confetti piece
+        roundRect(ctx, -this.w/2, -this.h/2, this.w, this.h, 2);
+        ctx.fillStyle = this.color;
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    function roundRect(ctx, x, y, w, h, r){
+      ctx.beginPath();
+      ctx.moveTo(x+r, y);
+      ctx.arcTo(x+w, y, x+w, y+h, r);
+      ctx.arcTo(x+w, y+h, x, y+h, r);
+      ctx.arcTo(x, y+h, x, y, r);
+      ctx.arcTo(x, y, x+w, y, r);
+      ctx.closePath();
+    }
+
+    const particleColors = ['#FF7A7A','#FFD166','#7EE8FA','#9AE6B4','#CBA0FF','#FFB3E6','#FFE29A'];
+    let particles = [];
+    let running = false;
+    let animationId;
+
+    function createParticles(count = 120){
+      particles = [];
+      for(let i=0;i<count;i++) particles.push(new Particle());
+    }
+
+    function loop(){
+      ctx.clearRect(0,0,W,H);
+      for(const p of particles){
+        p.update();
+        p.draw(ctx);
+      }
+      animationId = requestAnimationFrame(loop);
+    }
+
+    // burst confetti once (more particles upwards)
+    function burst(){
+      // create temporary burst particles with upward velocity
+      for(let i=0;i<150;i++){
+        const p = new Particle();
+        p.x = W/2 + (Math.random()-0.5)*W*0.6;
+        p.y = H*0.2 + (Math.random()-0.5)*40;
+        p.speedY = -2 - Math.random()*6;
+        p.speedX = (Math.random()-0.5)*8;
+        p.ttl = 120 + Math.random()*80;
+        particles.push(p);
+      }
+    }
+
+    // start/stop
+    function startConfetti(){
+      if(running) return;
+      running = true;
+      createParticles(120);
+      burst();
+      loop();
+      setTimeout(()=>{ // let it naturally fade
+        // keep a lower amount of floating particles
+        particles.length = 60;
+      }, 2200);
+    }
+
+    function resetAll(){
+      cancelAnimationFrame(animationId);
+      particles = [];
+      ctx.clearRect(0,0,W,H);
+      running = false;
+    }
+
+    document.getElementById('btn-conf').addEventListener('click', ()=>{
+      startConfetti();
+      // short sparkle animation in the heading
+      const h = document.getElementById('main-heading');
+      h.animate([
+        {filter: 'brightness(1) drop-shadow(0 6px 25px rgba(255,255,255,0.0))', transform: 'scale(1) rotate(0)'},
+        {filter: 'brightness(1.35) drop-shadow(0 18px 30px rgba(255,255,255,0.35))', transform: 'scale(1.03) rotate(-2deg)'},
+        {filter: 'brightness(1) drop-shadow(0 6px 25px rgba(255,255,255,0.0))', transform: 'scale(1) rotate(0)'}
+      ],{duration:900,iterations:1,easing:'ease-out'});
+    });
+
+    document.getElementById('btn-reset').addEventListener('click', ()=>{
+      resetAll();
+    });
+
+    // small initial animation: automatic confetti after load
+    window.addEventListener('load', ()=>{
+      resize();
+      // subtle delayed celebration
+      setTimeout(()=>{
+        startConfetti();
+        setTimeout(()=>{ // stop after a few seconds
+          particles.length = 0;
+        }, 2500);
+      }, 700);
+    });
+
+    // keyboard accessibility: press space on focused button
+    document.querySelectorAll('.btn').forEach(b=>b.addEventListener('keydown', (e)=>{
+      if(e.key === ' ' || e.key === 'Enter'){
+        e.preventDefault(); b.click();
+      }
+    }));
+
+  </script>
+</body>
+</html>
